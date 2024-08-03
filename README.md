@@ -7,7 +7,7 @@ It also implemented a Google Map API to get the estimate distance between two co
 
 ## How To Run
 First you need to install Docker in your machine.
-After that you need to get an good maps api key from Google 
+After that you need to get an google maps api key from Google 
 and replace the key in the application.yml file(google.map.distance.key=YOUR_GOOGLE_API_KEY).
 Then cd to the project root directory and run the following command in your terminal:
 1. chmod +x start.sh
