@@ -1,0 +1,37 @@
+spring:
+  application:
+    name: jlfang-order-demo
+
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+    default-property-inclusion: non_null
+
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/jlfang?useSSL=false&serverTimezone=GMT%2B8&useUnicode=true&allowPublicKeyRetrieval=true
+    username: user
+    password: userpassword
+    dbcp2:
+      validation-query: select 1
+
+  mybatis:
+    type-aliases-package: com.jlfang.demo
+    mapper-locations: classpath:mapper/*.xml
+    configuration:
+      map-underscore-to-camel-case: true
+
+logging:
+  level:
+    root: INFO
+    com.jlfang.demo: DEBUG
+
+server:
+  port: 8080
+
+google:
+    map:
+      distance:
+        base-url: https://maps.googleapis.com/maps/api/
+        key: YOUR_GOOGLE_API_KEY
+
