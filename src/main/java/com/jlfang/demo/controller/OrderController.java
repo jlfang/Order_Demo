@@ -1,10 +1,7 @@
 package com.jlfang.demo.controller;
 
 
-import com.jlfang.demo.comon.vo.order.OrderCreateReq;
-import com.jlfang.demo.comon.vo.order.OrderCreateRes;
-import com.jlfang.demo.comon.vo.order.OrderTakeRes;
-import com.jlfang.demo.comon.vo.order.OrderView;
+import com.jlfang.demo.comon.vo.order.*;
 import com.jlfang.demo.service.IOrderService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,8 +21,8 @@ public class OrderController {
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<OrderTakeRes> takeOrder(@PathVariable("id") Long id) {
-        return orderService.takeOrder(id);
+    public ResponseEntity<OrderTakeRes> takeOrder(@PathVariable("id") Long id, @RequestBody OrderTakeReq req) {
+        return orderService.takeOrder(id,req);
     }
 
     @GetMapping

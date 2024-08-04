@@ -75,11 +75,11 @@ public class OrderServiceImpl extends ServiceImpl<TOrderMapper,TOrder> implement
     }
 
     @Override
-    public ResponseEntity<OrderTakeRes> takeOrder(Long id) {
+    public ResponseEntity<OrderTakeRes> takeOrder(Long id, OrderTakeReq req) {
         log.info("get order request: {}",id);
-        if(id == null){
+        if(id == null || Objects.isNull(req) || "TAKEN".equals(req.getStatus())){
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(OrderTakeRes.builder().error("order id is null").build());
+                    .body(OrderTakeRes.builder().error("order id is null or request body is in valid").build());
         }
         TOrder order = this.getById(id);
         if(null == order){
@@ -97,7 +97,7 @@ public class OrderServiceImpl extends ServiceImpl<TOrderMapper,TOrder> implement
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(OrderTakeRes.builder().error("take order failed, please try again").build());
         }
-        OrderTakeRes orderTakeRes = OrderTakeRes.builder().status(order.getStatus()).build();
+        OrderTakeRes orderTakeRes = OrderTakeRes.builder().status("SUCCESS").build();
         return ResponseEntity.ok(orderTakeRes);
     }
 

@@ -2,10 +2,7 @@ package com.jlfang.demo.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.jlfang.demo.common.entity.TOrder;
-import com.jlfang.demo.comon.vo.order.OrderCreateReq;
-import com.jlfang.demo.comon.vo.order.OrderCreateRes;
-import com.jlfang.demo.comon.vo.order.OrderTakeRes;
-import com.jlfang.demo.comon.vo.order.OrderView;
+import com.jlfang.demo.comon.vo.order.*;
 import org.springframework.http.ResponseEntity;
 
 import java.util.List;
@@ -23,9 +20,10 @@ public interface IOrderService extends IService<TOrder> {
     /**
      * take an order
      * @param id order id
+     * @param req order take request body
      * @return
      */
-    ResponseEntity<OrderTakeRes> takeOrder(Long id);
+    ResponseEntity<OrderTakeRes> takeOrder(Long id, OrderTakeReq req);
 
     /**
      * get orders by page

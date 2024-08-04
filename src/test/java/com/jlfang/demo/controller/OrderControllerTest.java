@@ -2,14 +2,12 @@ package com.jlfang.demo.controller;
 
 import com.alibaba.fastjson.JSON;
 import com.jlfang.demo.common.enums.OrderStatusEnum;
-import com.jlfang.demo.comon.vo.order.OrderCreateReq;
-import com.jlfang.demo.comon.vo.order.OrderCreateRes;
-import com.jlfang.demo.comon.vo.order.OrderTakeRes;
-import com.jlfang.demo.comon.vo.order.OrderView;
+import com.jlfang.demo.comon.vo.order.*;
 import com.jlfang.demo.mapper.TOrderMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPatch;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
@@ -192,12 +190,16 @@ class OrderControllerTest {
             log.error("not enough unassigned orders, create more");
             return;
         }
+        OrderTakeReq orderTakeReq = new OrderTakeReq();
+        orderTakeReq.setStatus("taken");
+
         log.info("order take success request: {}", orderId);
         // When & Then
         // TestRestTemplate does not support PATCH, so here we use HttpClient instead
         CloseableHttpClient httpClient = HttpClients.createDefault();
         HttpPatch httpPatch = new HttpPatch(baseUrl + "/" + orderId);
         httpPatch.setHeader("Content-Type", "application/json");
+        httpPatch.setEntity(new StringEntity(JSON.toJSONString(orderTakeReq)));
         try (CloseableHttpResponse response = httpClient.execute(httpPatch)) {
             log.info("order take success response: {}", response);
             int statusCode = response.getStatusLine().getStatusCode();
@@ -205,7 +207,7 @@ class OrderControllerTest {
             OrderTakeRes orderTakeRes = JSON.parseObject(respStr, OrderTakeRes.class);
             Assertions.assertEquals(HttpStatus.OK.value(), statusCode);
             Assertions.assertNotNull(orderTakeRes, "response body should not be null");
-            Assertions.assertEquals(OrderStatusEnum.ASSIGNED.getValue(), orderTakeRes.getStatus());
+            Assertions.assertEquals("SUCCESS", orderTakeRes.getStatus());
         }
     }
 
@@ -223,12 +225,15 @@ class OrderControllerTest {
         log.info("order take race condition request: {}", orderId);
         String url = baseUrl + "/" + orderId;
         int threadNum = 20;
+        OrderTakeReq orderTakeReq = new OrderTakeReq();
+        orderTakeReq.setStatus("taken");
         // When & Then
         ExecutorService executor = Executors.newFixedThreadPool(threadNum);
         Callable<CloseableHttpResponse> task = () -> {
             CloseableHttpClient httpClient = HttpClients.createDefault();
             HttpPatch httpPatch = new HttpPatch(url);
             httpPatch.setHeader("Content-Type", "application/json");
+            httpPatch.setEntity(new StringEntity(JSON.toJSONString(orderTakeReq)));
             return httpClient.execute(httpPatch);
         };
         Future<CloseableHttpResponse>[] futures = new Future[threadNum];
@@ -244,7 +249,7 @@ class OrderControllerTest {
             log.info("request:{},response:{} ", i++, respStr);
             OrderTakeRes orderTakeRes = JSON.parseObject(respStr, OrderTakeRes.class);
             if (HttpStatus.OK.value() == statusCode
-                    && OrderStatusEnum.ASSIGNED.getValue().equals(orderTakeRes.getStatus())) {
+                    && "SUCCESS".equals(orderTakeRes.getStatus())) {
                 successCnt++;
             }
         }
@@ -266,12 +271,15 @@ class OrderControllerTest {
             log.error("not enough assigned orders, create more");
             return;
         }
+        OrderTakeReq orderTakeReq = new OrderTakeReq();
+        orderTakeReq.setStatus("taken");
         log.info("order take fail1 request: {}", orderId);
         // When & Then
         // TestRestTemplate does not support PATCH, so here we use HttpClient instead
         CloseableHttpClient httpClient = HttpClients.createDefault();
         HttpPatch httpPatch = new HttpPatch(baseUrl + "/" + orderId);
         httpPatch.setHeader("Content-Type", "application/json");
+        httpPatch.setEntity(new StringEntity(JSON.toJSONString(orderTakeReq)));
         CloseableHttpResponse response = httpClient.execute(httpPatch);
         int statusCode = response.getStatusLine().getStatusCode();
         String respStr = EntityUtils.toString(response.getEntity());
@@ -293,19 +301,49 @@ class OrderControllerTest {
     void testTakeOrderFail2() throws Exception {
         // Given
         Long orderId = Long.MAX_VALUE;
-
+        OrderTakeReq orderTakeReq = new OrderTakeReq();
+        orderTakeReq.setStatus("taken");
         log.info("order take fail2 request: {}", orderId);
         // When & Then
         // TestRestTemplate does not support PATCH, so here we use HttpClient instead
         CloseableHttpClient httpClient = HttpClients.createDefault();
         HttpPatch httpPatch = new HttpPatch(baseUrl + "/" + orderId);
         httpPatch.setHeader("Content-Type", "application/json");
+        httpPatch.setEntity(new StringEntity(JSON.toJSONString(orderTakeReq)));
         try (CloseableHttpResponse response = httpClient.execute(httpPatch)) {
             log.info("order take fail2 response: {}", response);
             int statusCode = response.getStatusLine().getStatusCode();
             String respStr = EntityUtils.toString(response.getEntity());
             OrderTakeRes orderTakeRes = JSON.parseObject(respStr, OrderTakeRes.class);
             Assertions.assertEquals(HttpStatus.NOT_FOUND.value(), statusCode);
+            Assertions.assertNotNull(orderTakeRes, "response body should not be null");
+            Assertions.assertNotNull(orderTakeRes.getError(), "response error message should not be null");
+        }
+    }
+
+    /**
+     * take order
+     * take order fail for invalid request body
+     *
+     * @throws Exception
+     */
+    @Test
+    void testTakeOrderFail3() throws Exception {
+        // Given
+        Long orderId = Long.MAX_VALUE;
+
+        log.info("order take fail3 request: {}", orderId);
+        // When & Then
+        // TestRestTemplate does not support PATCH, so here we use HttpClient instead
+        CloseableHttpClient httpClient = HttpClients.createDefault();
+        HttpPatch httpPatch = new HttpPatch(baseUrl + "/" + orderId);
+        httpPatch.setHeader("Content-Type", "application/json");
+        try (CloseableHttpResponse response = httpClient.execute(httpPatch)) {
+            log.info("order take fail3 response: {}", response);
+            int statusCode = response.getStatusLine().getStatusCode();
+            String respStr = EntityUtils.toString(response.getEntity());
+            OrderTakeRes orderTakeRes = JSON.parseObject(respStr, OrderTakeRes.class);
+            Assertions.assertEquals(HttpStatus.BAD_REQUEST.value(), statusCode);
             Assertions.assertNotNull(orderTakeRes, "response body should not be null");
             Assertions.assertNotNull(orderTakeRes.getError(), "response error message should not be null");
         }
@@ -422,8 +460,11 @@ class OrderControllerTest {
         log.info("get orders after create successfully");
 
         CloseableHttpClient httpClient = HttpClients.createDefault();
+        OrderTakeReq orderTakeReq = new OrderTakeReq();
+        orderTakeReq.setStatus("taken");
         HttpPatch httpPatch = new HttpPatch(baseUrl + "/" + id);
         httpPatch.setHeader("Content-Type", "application/json");
+        httpPatch.setEntity(new StringEntity(JSON.toJSONString(orderTakeReq)));
         try (CloseableHttpResponse response = httpClient.execute(httpPatch)) {
             log.info("order take success response: {}", response);
             int statusCode = response.getStatusLine().getStatusCode();
@@ -431,7 +472,7 @@ class OrderControllerTest {
             OrderTakeRes orderTakeRes = JSON.parseObject(respStr, OrderTakeRes.class);
             Assertions.assertEquals(HttpStatus.OK.value(), statusCode);
             Assertions.assertNotNull(orderTakeRes, "response body should not be null");
-            Assertions.assertEquals(OrderStatusEnum.ASSIGNED.getValue(), orderTakeRes.getStatus());
+            Assertions.assertEquals("SUCCESS", orderTakeRes.getStatus());
             log.info("order take successfully: {}", orderTakeRes);
         }
 
