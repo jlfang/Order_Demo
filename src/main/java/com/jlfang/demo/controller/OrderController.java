@@ -30,4 +30,10 @@ public class OrderController {
                                                          @RequestParam("limit") Integer limit) {
         return orderService.getOrdersPage(page, limit);
     }
+
+
+    @GetMapping("test")
+    public String test() {
+        return "A greeting from Cris~";
+    }
 }
