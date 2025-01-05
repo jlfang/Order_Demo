@@ -34,6 +34,6 @@ public class OrderController {
 
     @GetMapping("test")
     public String test() {
-        return "A greeting from Cris~~~";
+        return "A greeting from Cris~~~~~~~~";
     }
 }
